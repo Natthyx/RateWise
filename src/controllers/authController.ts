@@ -7,7 +7,11 @@ import axios from "axios";
 // REGISTER ADMIN
 export const registerAdmin = async (req: Request , res:Response) => {
     try{
-        const {name, email, password} = req.body;
+        const {name, email, password, role} = req.body;
+
+        if (!["admin","staff"].includes(role)) {
+            return res.status(400).json({error: "Invalid role"});
+        }
 
         const userRecord = await auth.createUser({
             email,
@@ -16,10 +20,10 @@ export const registerAdmin = async (req: Request , res:Response) => {
         });
 
         // set role claim to admin
-        await auth.setCustomUserClaims(userRecord.uid, {role: "admin"});
+        await auth.setCustomUserClaims(userRecord.uid, {role});
 
         res.status(201).json({
-            message: "Admin registered successfully",
+            message: `${role} registered successfully`,
             userId: userRecord.uid
         });
     } catch(error: any){
@@ -43,18 +47,20 @@ export const loginAdmin = async (req: Request, res:Response) =>{
             }
         );
 
-        const {localId, idToken} = response.data;
+        const {localId} = response.data;
         const user = await auth.getUser(localId);
 
-        if (user.customClaims?.role !== "admin"){
+        const role = user.customClaims?.role;
+
+        if (!role || (role !== "admin" && role !== "superadmin")){
             return res.status(403).json({ error: "Not authorized"});
         }
 
-        const token = generateToken(localId, "admin");
+        const token = generateToken(localId, role);
         
         res.status(200).json({
             userId: localId,
-            role: "admin",
+            role,
             token,
         });
     } catch (error: any) {

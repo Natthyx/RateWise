@@ -10,6 +10,7 @@ const serviceAccountPath = path.resolve(process.env.GOOGLE_APPLICATION_CREDENTIA
 
 admin.initializeApp({
   credential: admin.credential.cert(require(serviceAccountPath)),
+  storageBucket: process.env.FIREBASE_STORAGE_BUCKET || ""
 });
 
 export const auth = admin.auth();

@@ -25,7 +25,7 @@ export const verifyToken = (
     next: NextFunction
 ) => {
     try{
-        // Expect header fromat: Authorization: Bearer <token>
+        // Expect header format: Authorization: Bearer <token>
         const authHeader = req.headers.authorization;
 
         if(!authHeader || !authHeader.startsWith("Bearer ")){
@@ -48,8 +48,15 @@ export const verifyToken = (
 
 // Restrict to admin-only routes
 export const verifyAdmin = (req: AuthenticatedRequest, res:Response, next: NextFunction) => {
-    if (req.user?.role !== "admin"){
+    if (req.user?.role !== "admin" && req.user?.role !== "superadmin") {
         return res.status(403).json({message: "Access denied: admin only"});
+    }
+    next();
+};
+
+export const verifySuperAdmin = (req: AuthenticatedRequest, res:Response, next: NextFunction) => {
+    if (req.user?.role !== "superadmin") {
+        return res.status(403).json({message: "Access denied: superadmin only"});
     }
     next();
 };
