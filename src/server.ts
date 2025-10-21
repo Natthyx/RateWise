@@ -7,6 +7,7 @@ import serviceRoutes from "./routes/serviceRoutes";
 import sessionRoutes from "./routes/sessionRoutes";
 import analyticsRoutes from "./routes/analyticsRoutes";
 import { setupSwagger } from "./config/swagger";
+import healthRoutes from "./routes/healthRoutes";
 
 
 dotenv.config();
@@ -24,6 +25,7 @@ app.use("/staff", staffRoutes);
 app.use("/service", serviceRoutes);
 app.use("/session", sessionRoutes);
 app.use("/analytics/", analyticsRoutes);
+app.use("/", healthRoutes);
 
 const PORT = process.env.PORT || 4000;
 
