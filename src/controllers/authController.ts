@@ -2,8 +2,9 @@ import {Request , Response} from "express";
 import { auth } from "../config/firebase";
 import { generateToken } from "../utils/generateToken";
 import axios from "axios";
-// import dotenv from "dotenv";
+import admin from "../config/firebase";
 
+const db = admin.firestore();
 // REGISTER ADMIN
 export const registerAdmin = async (req: Request , res:Response) => {
     try{
@@ -97,5 +98,28 @@ export const resetPassword = async (req: Request, res: Response) => {
 
     }catch (error: any){
         res.status(400).json({error: "Email not found"});
+    }
+}
+
+export const loginStaff = async (req: Request, res:Response) => {
+    try{
+        const {pin} = req.body;
+
+        if(!pin) return res.status(400).json({error: "PIN is required"});
+
+        const snapshot = await db.collection("staff").where("pin", "==", pin).get();
+        if (snapshot.empty) {
+            return res.status(404).json({error: "Staff not found"});
+        }
+        const staff = snapshot.docs[0].data();
+
+        //  Generate JWT token
+        const token = generateToken(staff.id, "staff");
+
+
+        return res.status(200).json({success: true, userId: staff.id, token, role: staff.role});
+    } catch(error: any){
+        res.status(500).json({error: error.message});
+
     }
 }

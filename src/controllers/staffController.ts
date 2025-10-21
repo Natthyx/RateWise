@@ -2,9 +2,14 @@ import { Request, Response} from "express";
 import {auth} from "../config/firebase";
 import admin from "../config/firebase";
 import { uploadToStorage } from "../utils/uploadToStorage";
-import {v4 as uuidv4} from 'uuid';
 
 const db = admin.firestore();
+interface AuthenticatedRequest extends Request {
+  user?: {
+    userId: string;
+    role: string;
+  };
+}
 
 //Helper: generate 4-digit PIN
 
@@ -38,7 +43,7 @@ export const createStaff = async (req: Request, res: Response) => {
         if (!file)
             return res.status(400).json({error: "Avatar image is required"});
         
-        const pin = generateUniquePin();
+        const pin = await generateUniquePin();
 
         const initials = name.split(" ").map((n: string) => n[0]).join("").toUpperCase();
 
@@ -230,3 +235,53 @@ export const regeneratePin = async (req: Request, res: Response) => {
         res.status(500).json({error: error.message})
     }
 }
+
+// Get Staff Performance
+
+export const getStaffPerformance = async (req: AuthenticatedRequest, res : Response) =>{
+  try{
+    const staffId = req.user?.userId;
+    if (!staffId) {
+      return res.status(401).json({ error: "Unauthorized: Missing staff ID" });
+    }
+
+    const staffDoc = await db.collection("staff").doc(staffId).get();
+
+    if(!staffDoc.exists){
+      return res.status(404).json({error: "Staff not found"});
+    }
+
+    const staffData = staffDoc.data();
+
+    const performance = {
+      staffId,
+      name: staffData?.name || "Unknown Staff",
+      rating: staffData?.rating || 0,
+      totalReviews: staffData?.reviewCount || 0,
+      
+    };
+
+    res.status(200).json(performance);
+  } catch (error: any){
+    res.status(500).json({error: error.message});
+  }
+};
+
+
+export const getStaffLeaderboard = async (req: Request, res: Response) => {
+  try {
+    const staffSnap = await db.collection("staff").get();
+
+    const leaderboard = staffSnap.docs
+      .map((doc) => ({
+        staffId: doc.id,
+        name: doc.data().name,
+        rating: doc.data().rating || 0,
+      }))
+      .sort((a, b) => b.rating - a.rating);
+
+    res.status(200).json({ leaderboard });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+};

@@ -61,3 +61,11 @@ export const verifySuperAdmin = (req: AuthenticatedRequest, res:Response, next: 
     next();
 };
 
+// Restrict to staff-only routes
+export const verifyStaff = (req: AuthenticatedRequest, res:Response, next: NextFunction) => {
+    if (req.user?.role !== "staff") {
+        return res.status(403).json({message: "Access denied: staff only"});
+    }
+    next();
+};
+
