@@ -1,7 +1,6 @@
 // src/config/firebase.ts
 import admin from "firebase-admin";
 import dotenv from "dotenv";
-import path from "path";
 
 dotenv.config();
 
