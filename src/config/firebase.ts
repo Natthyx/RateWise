@@ -5,11 +5,9 @@ import path from "path";
 
 dotenv.config();
 
-// Resolve the path to your service account file
-const serviceAccountPath = path.resolve(process.env.GOOGLE_APPLICATION_CREDENTIALS || "");
-
+const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT as string);
 admin.initializeApp({
-  credential: admin.credential.cert(require(serviceAccountPath)),
+  credential: admin.credential.cert(serviceAccount),
   storageBucket: process.env.FIREBASE_STORAGE_BUCKET || ""
 });
 

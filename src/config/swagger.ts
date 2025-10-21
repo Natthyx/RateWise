@@ -16,6 +16,10 @@ const options = {
         url: "http://localhost:4000",
         description: "Development Server",
       },
+      {
+        url: "https://rately-smw9.onrender.com",
+        description: "Production Server",
+      },
     ],
     components: {
       securitySchemes: {
