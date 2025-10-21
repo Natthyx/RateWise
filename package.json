@@ -1,5 +1,5 @@
 {
-  "name": "ratewise",
+  "name": "rately",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -8,15 +8,15 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Natthyx/RateWise.git"
+    "url": "git+https://github.com/Natthyx/rately.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/Natthyx/RateWise/issues"
+    "url": "https://github.com/Natthyx/rately/issues"
   },
-  "homepage": "https://github.com/Natthyx/RateWise#readme",
+  "homepage": "https://github.com/Natthyx/rately#readme",
   "dependencies": {
     "@types/multer": "^2.0.0",
     "axios": "^1.12.2",
