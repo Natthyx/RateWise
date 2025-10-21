@@ -14,7 +14,7 @@ const router = express.Router();
  * @swagger
  * tags:
  *   name: Authentication
- *   description: Authentication endpoints for admin and staff
+ *   description: Endpoints for admin and staff authentication
  */
 
 /**
@@ -32,11 +32,25 @@ const router = express.Router();
  *           schema:
  *             type: object
  *             properties:
- *               email: { type: string }
- *               password: { type: string }
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *               name:
+ *                 type: string
+ *               role:
+ *                 type: string
  *     responses:
  *       201:
  *         description: Admin registered successfully
+ *       400:
+ *         description: Invalid role
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Not authorized
+ *       500:
+ *         description: Internal server error
  */
 router.post("/register", verifyToken, verifySuperAdmin, registerAdmin);
 
@@ -53,11 +67,15 @@ router.post("/register", verifyToken, verifySuperAdmin, registerAdmin);
  *           schema:
  *             type: object
  *             properties:
- *               email: { type: string }
- *               password: { type: string }
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
  *     responses:
  *       200:
  *         description: Successful login
+ *       500:
+ *         description: Invalid credentials
  */
 router.post("/login", loginAdmin);
 
@@ -70,6 +88,8 @@ router.post("/login", loginAdmin);
  *     responses:
  *       200:
  *         description: Successfully logged out
+ *       500:
+ *         description: Internal server error
  */
 router.post("/logout", logoutAdmin);
 
@@ -79,6 +99,22 @@ router.post("/logout", logoutAdmin);
  *   post:
  *     summary: Reset admin password
  *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Password reset email sent successfully
+ *       400:
+ *         description: Email not found
+ *       500:
+ *         description: Internal server error
  */
 router.post("/reset-password", resetPassword);
 
@@ -95,10 +131,17 @@ router.post("/reset-password", resetPassword);
  *           schema:
  *             type: object
  *             properties:
- *               pin: { type: string }
+ *               pin:
+ *                 type: string
  *     responses:
  *       200:
- *         description: Staff logged in
+ *         description: Staff logged in successfully
+ *       400:
+ *         description: PIN is required
+ *       404:
+ *         description: Staff not found
+ *       500:
+ *         description: Internal server error
  */
 router.post("/staff/login", loginStaff);
 

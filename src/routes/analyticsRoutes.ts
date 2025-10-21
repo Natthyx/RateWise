@@ -13,7 +13,7 @@ const router = express.Router();
  * @swagger
  * tags:
  *   name: Analytics
- *   description: Admin analytics endpoints for performance overview
+ *   description: Analytics endpoints for performance overview
  */
 
 /**
@@ -29,6 +29,8 @@ const router = express.Router();
  *         description: List of staff ranked by rating and review count
  *       401:
  *         description: Unauthorized
+ *       500:
+ *         description: Internal server error
  */
 router.get("/top-staff", verifyToken, verifyAdmin, getTopStaffAnalytics);
 
@@ -43,6 +45,10 @@ router.get("/top-staff", verifyToken, verifyAdmin, getTopStaffAnalytics);
  *     responses:
  *       200:
  *         description: List of services sorted by rating and review count
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Internal server error
  */
 router.get("/top-services", verifyToken, verifyAdmin, getTopServicesAnalytics);
 
@@ -57,6 +63,10 @@ router.get("/top-services", verifyToken, verifyAdmin, getTopServicesAnalytics);
  *     responses:
  *       200:
  *         description: List of subservices sorted by rating
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Internal server error
  */
 router.get("/top-subservices", verifyToken, verifyAdmin, getTopSubServicesAnalytics);
 
@@ -71,6 +81,10 @@ router.get("/top-subservices", verifyToken, verifyAdmin, getTopSubServicesAnalyt
  *     responses:
  *       200:
  *         description: List of top-rated items by performance
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Internal server error
  */
 router.get("/top-items", verifyToken, verifyAdmin, getTopItemsAnalytics);
 
