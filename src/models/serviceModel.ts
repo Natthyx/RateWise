@@ -4,6 +4,7 @@ export interface Service{
     description?: string;
     rating: number,
     reviewCount: number,
+    adminId?: string,
     createdAt: Date;
 }
 export interface SubService{

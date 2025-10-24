@@ -8,10 +8,10 @@ const db = admin.firestore();
 // REGISTER ADMIN
 export const registerAdmin = async (req: Request , res:Response) => {
     try{
-        const {name, email, password, role} = req.body;
+        const {name, email, password, serviceId} = req.body;
 
-        if (!["admin","staff"].includes(role)) {
-            return res.status(400).json({error: "Invalid role"});
+        if (!serviceId) {
+            return res.status(400).json({ error: "Service ID is required for admin registration" });
         }
 
         const userRecord = await auth.createUser({
@@ -21,10 +21,21 @@ export const registerAdmin = async (req: Request , res:Response) => {
         });
 
         // set role claim to admin
-        await auth.setCustomUserClaims(userRecord.uid, {role});
+        await auth.setCustomUserClaims(userRecord.uid, {role: "admin"});
+        
+        
+        const serviceRef = db.collection("services").doc(serviceId);
+        const serviceDoc = await serviceRef.get();
+
+        if (!serviceDoc.exists) {
+            return res.status(404).json({ error: "Service not found" });
+        }
+
+        // Update the service with this admin’s UID
+        await serviceRef.update({ adminId: userRecord.uid });
 
         res.status(201).json({
-            message: `${role} registered successfully`,
+            message: `Admin registered successfully`,
             userId: userRecord.uid
         });
     } catch(error: any){

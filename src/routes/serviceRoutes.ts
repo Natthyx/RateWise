@@ -13,8 +13,9 @@ import {
     getAllItems,
     updateItem,
     deleteItem,
+    getServiceByAdmin,
 } from "../controllers/serviceController";
-import { verifyToken, verifyAdmin } from "../middleware/authMiddleware";
+import { verifyToken, verifyAdmin, verifySuperAdmin } from "../middleware/authMiddleware";
 
 
 const router = express.Router();
@@ -29,9 +30,9 @@ const upload = multer({storage: multer.memoryStorage()});
 
 /**
  * @swagger
- * /services/create:
+ * /service/create:
  *   post:
- *     summary: Create a new service
+ *     summary: Create a new service (Super Admin only)
  *     tags: [Services]
  *     security:
  *       - bearerAuth: []
@@ -54,27 +55,63 @@ const upload = multer({storage: multer.memoryStorage()});
  *       500:
  *         description: Internal server error
  */
-router.post("/create", verifyToken, verifyAdmin, createService);
+router.post("/create", verifyToken, verifySuperAdmin, createService);
 
 /**
  * @swagger
- * /services/all:
+ * /service/all:
  *   get:
- *     summary: Get all services
+ *     summary: Get all a service (superadmin only)
  *     tags: [Services]
+ *     security:
+ *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: List of all services
  *       500:
  *         description: Internal server error
  */
-router.get("/all", getAllServices);
+router.get("/all", verifyToken, verifySuperAdmin, getAllServices)
+/**
+ * @swagger
+ * /service/my-service:
+ *   get:
+ *     summary: Get the service assigned to the logged-in admin
+ *     tags: [Services]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: The admin’s assigned service details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: string
+ *                   example: "service123"
+ *                 name:
+ *                   type: string
+ *                   example: "Spa and Wellness"
+ *                 description:
+ *                   type: string
+ *                   example: "Luxury spa services with massage and therapy options"
+ *       401:
+ *         description: Unauthorized access
+ *       404:
+ *         description: No service found for this admin
+ *       500:
+ *         description: Internal server error
+ */
+
+router.get("/my-service", verifyToken, verifyAdmin, getServiceByAdmin);
 
 /**
  * @swagger
- * /services/update/{serviceId}:
+ * /service/update/{serviceId}: 
  *   patch:
- *     summary: Update a service by ID
+ *     summary: Update a service by ID (Super Admin only)
  *     tags: [Services]
  *     security:
  *       - bearerAuth: []
@@ -101,13 +138,13 @@ router.get("/all", getAllServices);
  *       500:
  *         description: Internal server error
  */
-router.patch("/update/:serviceId", verifyToken, verifyAdmin, updateService);
+router.patch("/update/:serviceId", verifyToken, verifySuperAdmin, updateService);
 
 /**
  * @swagger
- * /services/delete/{serviceId}:
+ * /service/delete/{serviceId}:
  *   delete:
- *     summary: Delete a service by ID
+ *     summary: Delete a service by ID (Super Admin only)
  *     tags: [Services]
  *     security:
  *       - bearerAuth: []
@@ -123,11 +160,11 @@ router.patch("/update/:serviceId", verifyToken, verifyAdmin, updateService);
  *       500:
  *         description: Internal server error
  */
-router.delete("/delete/:serviceId", verifyToken, verifyAdmin, deleteService);
+router.delete("/delete/:serviceId", verifyToken, verifySuperAdmin, deleteService);
 
 /**
  * @swagger
- * /services/{serviceId}/subservices/create:
+ * /service/{serviceId}/subservices/create:
  *   post:
  *     summary: Create a new subservice
  *     tags: [Services]
@@ -162,7 +199,7 @@ router.post("/:serviceId/subservices/create", verifyToken, verifyAdmin, createSu
 
 /**
  * @swagger
- * /services/{serviceId}/subservices/all:
+ * /service/{serviceId}/subservices/all:
  *   get:
  *     summary: Get all subservices for a service
  *     tags: [Services]
@@ -182,7 +219,7 @@ router.get("/:serviceId/subservices/all", getSubServices);
 
 /**
  * @swagger
- * /services/{serviceId}/subservices/update/{subServiceId}:
+ * /service/{serviceId}/subservices/update/{subServiceId}:
  *   patch:
  *     summary: Update a subservice by ID
  *     tags: [Services]
@@ -220,7 +257,7 @@ router.patch("/:serviceId/subservices/update/:subServiceId", verifyToken, verify
 
 /**
  * @swagger
- * /services/{serviceId}/subservices/delete/{subServiceId}:
+ * /service/{serviceId}/subservices/delete/{subServiceId}:
  *   delete:
  *     summary: Delete a subservice by ID
  *     tags: [Services]
@@ -247,7 +284,7 @@ router.delete("/:serviceId/subservices/delete/:subServiceId", verifyToken, verif
 
 /**
  * @swagger
- * /services/{serviceId}/subservices/{subServiceId}/items/add:
+ * /service/{serviceId}/subservices/{subServiceId}/items/add:
  *   post:
  *     summary: Add a new item
  *     tags: [Services]
@@ -294,7 +331,7 @@ router.post("/:serviceId/subservices/:subServiceId/items/add", verifyToken, veri
 
 /**
  * @swagger
- * /services/{serviceId}/subservices/{subServiceId}/items/all:
+ * /service/{serviceId}/subservices/{subServiceId}/items/all:
  *   get:
  *     summary: Get all items for a subservice
  *     tags: [Services]
@@ -323,7 +360,7 @@ router.get("/:serviceId/subservices/:subServiceId/items/all", getAllItems);
 
 /**
  * @swagger
- * /services/{serviceId}/subservices/{subServiceId}/items/update/{itemId}:
+ * /service/{serviceId}/subservices/{subServiceId}/items/update/{itemId}:
  *   patch:
  *     summary: Update an item by ID
  *     tags: [Services]
@@ -373,7 +410,7 @@ router.patch("/:serviceId/subservices/:subServiceId/items/update/:itemId", verif
 
 /**
  * @swagger
- * /services/{serviceId}/subservices/{subServiceId}/items/delete/{itemId}:
+ * /service/{serviceId}/subservices/{subServiceId}/items/delete/{itemId}:
  *   delete:
  *     summary: Delete an item by ID
  *     tags: [Services]

@@ -7,11 +7,18 @@ import { getDownloadURL } from "firebase-admin/storage";
 
 const db = admin.firestore();
 const storage = admin.storage();
+interface AuthenticatedRequest extends Request {
+  user?: {
+    userId: string;
+    role: string;
+  };
+}
+
 // Services
 //  Create Service
 export const createService = async (req: Request, res: Response) => {
     try {
-        const { name, description } = req.body;
+        const { name, description, adminId } = req.body;
 
         if (!name || !description) {
             return res.status(400).json({ error: "Name, description are required" });
@@ -24,6 +31,7 @@ export const createService = async (req: Request, res: Response) => {
             description,
             rating: 0,
             reviewCount: 0,
+            adminId: adminId || null,
             createdAt: new Date(),
         };
         await db.collection("services").doc(newService.id).set(newService);
@@ -38,10 +46,38 @@ export const createService = async (req: Request, res: Response) => {
 export const getAllServices = async (req: Request, res: Response) => {
     try {
         const snapshot = await db.collection("services").get();
-        const services = snapshot.docs.map(doc => doc.data());
-        res.status(200).json(services);
+        if (snapshot.empty) {
+            return res.status(404).json({ message: "No services found for this admin" });
+        }
+
+        const services =snapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+        }));
+
+        return res.status(200).json(services);
     } catch (error: any) {
-        res.status(500).json({ error: error.message });
+        return res.status(500).json({ message: "Internal server error", error: error.message });
+    }
+}
+export const getServiceByAdmin = async (req: AuthenticatedRequest, res: Response) => {
+    try {
+        const adminId = req.user?.userId;
+        const adminRole = req.user?.role;
+
+        if (adminRole !== "admin") {
+            return res.status(403).json({ error: "Unauthorized: Admin only" });
+        }
+        const snapshot = await db.collection("services").where("adminId", "==", adminId).limit(1).get();
+        if (snapshot.empty) {
+            return res.status(404).json({ message: "No services found for this admin" });
+        }
+        const doc = snapshot.docs[0];
+        const service = { id: doc.id, ...doc.data() };
+
+        return res.status(200).json(service);
+    } catch (error: any) {
+        return res.status(500).json({ message: "Internal server error", error: error.message });
     }
 }
 
@@ -52,7 +88,7 @@ export const updateService = async (req: Request, res: Response) => {
         await db.collection("services").doc(serviceId).update(req.body);
         res.status(200).json({ message: "Service updated successfully", serviceId: serviceId });
     } catch (error: any) {
-        res.status(500).json({ error: error.message });
+        return res.status(500).json({ message: "Internal server error", error: error.message });
     }
 }
 
@@ -63,7 +99,7 @@ export const deleteService = async (req: Request, res: Response) => {
         await db.collection("services").doc(serviceId).delete();
         res.status(200).json({ message: "Service deleted successfully", serviceId: serviceId })
     } catch (error: any) {
-        res.status(500).json({ error: error.message });
+        return res.status(500).json({ message: "Internal server error", error: error.message });
     }
 }
 
