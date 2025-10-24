@@ -1,19 +1,19 @@
 import express from "express";
 import multer from "multer";
 import {
+    createBusiness,
+    getAllBusiness,
+    updateBusiness,
+    deleteBusiness,
     createService,
-    getAllServices,
+    getServices,
     updateService,
     deleteService,
-    createSubService,
-    getSubServices,
-    updateSubService,
-    deleteSubService,
     addItem,
     getAllItems,
     updateItem,
     deleteItem,
-    getServiceByAdmin,
+    getBusinessByAdmin,
 } from "../controllers/serviceController";
 import { verifyToken, verifyAdmin, verifySuperAdmin } from "../middleware/authMiddleware";
 
@@ -24,18 +24,158 @@ const upload = multer({storage: multer.memoryStorage()});
 /**
  * @swagger
  * tags:
- *   name: Services
- *   description: Endpoints for managing services, subservices, and items
+ *   name: Business
+ *   description: Endpoints for managing business, services, and items
  */
 
 /**
  * @swagger
- * /service/create:
+ * /business/create:
  *   post:
- *     summary: Create a new service (Super Admin only)
+ *     summary: Create a new business (Super Admin only)
+ *     tags: [Business]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Business created successfully
+ *       400:
+ *         description: Name and description are required
+ *       500:
+ *         description: Internal server error
+ */
+router.post("/create", verifyToken, verifySuperAdmin, createBusiness);
+
+/**
+ * @swagger
+ * /business/all:
+ *   get:
+ *     summary: Get all businesses (superadmin only)
+ *     tags: [Business]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of all businesses
+ *       500:
+ *         description: Internal server error
+ */
+router.get("/all", verifyToken, verifySuperAdmin, getAllBusiness)
+/**
+ * @swagger
+ * /business/my-business:
+ *   get:
+ *     summary: Get the business assigned to the logged-in admin
+ *     tags: [Business]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: The admin’s assigned business details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: string
+ *                   example: "business123"
+ *                 name:
+ *                   type: string
+ *                   example: "Spa and Wellness"
+ *                 description:
+ *                   type: string
+ *                   example: "Luxury spa business with massage and therapy options"
+ *       401:
+ *         description: Unauthorized access
+ *       404:
+ *         description: No Business found for this admin
+ *       500:
+ *         description: Internal server error
+ */
+
+router.get("/my-business", verifyToken, verifyAdmin, getBusinessByAdmin);
+
+/**
+ * @swagger
+ * /business/update/{businessId}: 
+ *   patch:
+ *     summary: Update a Business by ID (Super Admin only)
+ *     tags: [Business]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: businessId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Business updated successfully
+ *       500:
+ *         description: Internal server error
+ */
+router.patch("/update/:businessId", verifyToken, verifySuperAdmin, updateBusiness);
+
+/**
+ * @swagger
+ * /business/delete/{businessId}:
+ *   delete:
+ *     summary: Delete a business by ID (Super Admin only)
+ *     tags: [Business]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: businessId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Business deleted successfully
+ *       500:
+ *         description: Internal server error
+ */
+router.delete("/delete/:businessId", verifyToken, verifySuperAdmin, deleteBusiness);
+
+/**
+ * @swagger
+ * /business/{businessId}/services/create:
+ *   post:
+ *     summary: Create a new service
  *     tags: [Services]
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: businessId
+ *         required: true
+ *         schema:
+ *           type: string
  *     requestBody:
  *       required: true
  *       content:
@@ -55,67 +195,42 @@ const upload = multer({storage: multer.memoryStorage()});
  *       500:
  *         description: Internal server error
  */
-router.post("/create", verifyToken, verifySuperAdmin, createService);
+router.post("/:businessId/services/create", verifyToken, verifyAdmin, createService);
 
 /**
  * @swagger
- * /service/all:
+ * /business/{businessId}/services/all:
  *   get:
- *     summary: Get all a service (superadmin only)
+ *     summary: Get all services for a business
  *     tags: [Services]
- *     security:
- *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: businessId
+ *         required: true
+ *         schema:
+ *           type: string
  *     responses:
  *       200:
- *         description: List of all services
+ *         description: List of all subservices
  *       500:
  *         description: Internal server error
  */
-router.get("/all", verifyToken, verifySuperAdmin, getAllServices)
-/**
- * @swagger
- * /service/my-service:
- *   get:
- *     summary: Get the service assigned to the logged-in admin
- *     tags: [Services]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: The admin’s assigned service details
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 id:
- *                   type: string
- *                   example: "service123"
- *                 name:
- *                   type: string
- *                   example: "Spa and Wellness"
- *                 description:
- *                   type: string
- *                   example: "Luxury spa services with massage and therapy options"
- *       401:
- *         description: Unauthorized access
- *       404:
- *         description: No service found for this admin
- *       500:
- *         description: Internal server error
- */
-
-router.get("/my-service", verifyToken, verifyAdmin, getServiceByAdmin);
+router.get("/:businessId/services/all", getServices);
 
 /**
  * @swagger
- * /service/update/{serviceId}: 
+ * /business/{businessId}/services/update/{serviceId}:
  *   patch:
- *     summary: Update a service by ID (Super Admin only)
+ *     summary: Update a service by ID
  *     tags: [Services]
  *     security:
  *       - bearerAuth: []
  *     parameters:
+ *       - in: path
+ *         name: businessId
+ *         required: true
+ *         schema:
+ *           type: string
  *       - in: path
  *         name: serviceId
  *         required: true
@@ -138,17 +253,22 @@ router.get("/my-service", verifyToken, verifyAdmin, getServiceByAdmin);
  *       500:
  *         description: Internal server error
  */
-router.patch("/update/:serviceId", verifyToken, verifySuperAdmin, updateService);
+router.patch("/:businessId/services/update/:serviceId", verifyToken, verifyAdmin, updateService);
 
 /**
  * @swagger
- * /service/delete/{serviceId}:
+ * /business/{businessId}/services/delete/{serviceId}:
  *   delete:
- *     summary: Delete a service by ID (Super Admin only)
+ *     summary: Delete a service by ID
  *     tags: [Services]
  *     security:
  *       - bearerAuth: []
  *     parameters:
+ *       - in: path
+ *         name: businessId
+ *         required: true
+ *         schema:
+ *           type: string
  *       - in: path
  *         name: serviceId
  *         required: true
@@ -160,131 +280,11 @@ router.patch("/update/:serviceId", verifyToken, verifySuperAdmin, updateService)
  *       500:
  *         description: Internal server error
  */
-router.delete("/delete/:serviceId", verifyToken, verifySuperAdmin, deleteService);
+router.delete("/:businessId/services/delete/:serviceId", verifyToken, verifyAdmin, deleteService);
 
 /**
  * @swagger
- * /service/{serviceId}/subservices/create:
- *   post:
- *     summary: Create a new subservice
- *     tags: [Services]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: serviceId
- *         required: true
- *         schema:
- *           type: string
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               name:
- *                 type: string
- *               description:
- *                 type: string
- *     responses:
- *       201:
- *         description: Subservice created successfully
- *       400:
- *         description: Name and description are required
- *       500:
- *         description: Internal server error
- */
-router.post("/:serviceId/subservices/create", verifyToken, verifyAdmin, createSubService);
-
-/**
- * @swagger
- * /service/{serviceId}/subservices/all:
- *   get:
- *     summary: Get all subservices for a service
- *     tags: [Services]
- *     parameters:
- *       - in: path
- *         name: serviceId
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: List of all subservices
- *       500:
- *         description: Internal server error
- */
-router.get("/:serviceId/subservices/all", getSubServices);
-
-/**
- * @swagger
- * /service/{serviceId}/subservices/update/{subServiceId}:
- *   patch:
- *     summary: Update a subservice by ID
- *     tags: [Services]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: serviceId
- *         required: true
- *         schema:
- *           type: string
- *       - in: path
- *         name: subServiceId
- *         required: true
- *         schema:
- *           type: string
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               name:
- *                 type: string
- *               description:
- *                 type: string
- *     responses:
- *       200:
- *         description: Subservice updated successfully
- *       500:
- *         description: Internal server error
- */
-router.patch("/:serviceId/subservices/update/:subServiceId", verifyToken, verifyAdmin, updateSubService);
-
-/**
- * @swagger
- * /service/{serviceId}/subservices/delete/{subServiceId}:
- *   delete:
- *     summary: Delete a subservice by ID
- *     tags: [Services]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: serviceId
- *         required: true
- *         schema:
- *           type: string
- *       - in: path
- *         name: subServiceId
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: Subservice deleted successfully
- *       500:
- *         description: Internal server error
- */
-router.delete("/:serviceId/subservices/delete/:subServiceId", verifyToken, verifyAdmin, deleteSubService);
-
-/**
- * @swagger
- * /service/{serviceId}/subservices/{subServiceId}/items/add:
+ * /business/{businessId}/services/{serviceId}/items/add:
  *   post:
  *     summary: Add a new item
  *     tags: [Services]
@@ -292,12 +292,12 @@ router.delete("/:serviceId/subservices/delete/:subServiceId", verifyToken, verif
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
- *         name: serviceId
+ *         name: businessId
  *         required: true
  *         schema:
  *           type: string
  *       - in: path
- *         name: subServiceId
+ *         name: serviceId
  *         required: true
  *         schema:
  *           type: string
@@ -327,22 +327,22 @@ router.delete("/:serviceId/subservices/delete/:subServiceId", verifyToken, verif
  *       500:
  *         description: Internal server error
  */
-router.post("/:serviceId/subservices/:subServiceId/items/add", verifyToken, verifyAdmin, upload.single("image"), addItem);
+router.post("/:businessId/services/:serviceId/items/add", verifyToken, verifyAdmin, upload.single("image"), addItem);
 
 /**
  * @swagger
- * /service/{serviceId}/subservices/{subServiceId}/items/all:
+ * /business/{businessId}/services/{serviceId}/items/all:
  *   get:
  *     summary: Get all items for a subservice
  *     tags: [Services]
  *     parameters:
  *       - in: path
- *         name: serviceId
+ *         name: businessId
  *         required: true
  *         schema:
  *           type: string
  *       - in: path
- *         name: subServiceId
+ *         name: serviceId
  *         required: true
  *         schema:
  *           type: string
@@ -356,11 +356,11 @@ router.post("/:serviceId/subservices/:subServiceId/items/add", verifyToken, veri
  *       500:
  *         description: Internal server error
  */
-router.get("/:serviceId/subservices/:subServiceId/items/all", getAllItems);
+router.get("/:businessId/services/:serviceId/items/all", getAllItems);
 
 /**
  * @swagger
- * /service/{serviceId}/subservices/{subServiceId}/items/update/{itemId}:
+ * /business/{businessId}/services/{serviceId}/items/update/{itemId}:
  *   patch:
  *     summary: Update an item by ID
  *     tags: [Services]
@@ -368,12 +368,12 @@ router.get("/:serviceId/subservices/:subServiceId/items/all", getAllItems);
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
- *         name: serviceId
+ *         name: businessId
  *         required: true
  *         schema:
  *           type: string
  *       - in: path
- *         name: subServiceId
+ *         name: serviceId
  *         required: true
  *         schema:
  *           type: string
@@ -406,11 +406,11 @@ router.get("/:serviceId/subservices/:subServiceId/items/all", getAllItems);
  *       500:
  *         description: Internal server error
  */
-router.patch("/:serviceId/subservices/:subServiceId/items/update/:itemId", verifyToken, verifyAdmin, upload.single("image"),updateItem);
+router.patch("/:businessId/services/:serviceId/items/update/:itemId", verifyToken, verifyAdmin, upload.single("image"),updateItem);
 
 /**
  * @swagger
- * /service/{serviceId}/subservices/{subServiceId}/items/delete/{itemId}:
+ * /business/{businessId}/services/{serviceId}/items/delete/{itemId}:
  *   delete:
  *     summary: Delete an item by ID
  *     tags: [Services]
@@ -418,12 +418,12 @@ router.patch("/:serviceId/subservices/:subServiceId/items/update/:itemId", verif
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
- *         name: serviceId
+ *         name: businessId
  *         required: true
  *         schema:
  *           type: string
  *       - in: path
- *         name: subServiceId
+ *         name: serviceId
  *         required: true
  *         schema:
  *           type: string
@@ -438,6 +438,6 @@ router.patch("/:serviceId/subservices/:subServiceId/items/update/:itemId", verif
  *       500:
  *         description: Internal server error
  */
-router.delete("/:serviceId/subservices/:subServiceId/items/delete/:itemId", verifyToken, verifyAdmin, deleteItem);
+router.delete("/:businessId/services/:serviceId/items/delete/:itemId", verifyToken, verifyAdmin, deleteItem);
 
 export default router;

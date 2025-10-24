@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import admin from "../config/firebase";
 import { v4 as uuidv4 } from "uuid";
-import { Service, SubService, Item } from "../models/serviceModel";
+import { Service, Item, Business } from "../models/serviceModel";
 import { getDownloadURL } from "firebase-admin/storage";
 
 
@@ -15,13 +15,106 @@ interface AuthenticatedRequest extends Request {
 }
 
 // Services
-//  Create Service
-export const createService = async (req: Request, res: Response) => {
+//  Create Business
+export const createBusiness = async (req: Request, res: Response) => {
     try {
         const { name, description, adminId } = req.body;
 
         if (!name || !description) {
             return res.status(400).json({ error: "Name, description are required" });
+
+        }
+
+        const newBusiness: Business = {
+            id: uuidv4(),
+            name,
+            description,
+            rating: 0,
+            reviewCount: 0,
+            adminId: adminId || null,
+            createdAt: new Date(),
+        };
+        await db.collection("business").doc(newBusiness.id).set(newBusiness);
+        res.status(201).json({ message: "Business created successfully", newBusiness });
+
+    } catch (error: any) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+// Get All Business
+export const getAllBusiness = async (req: Request, res: Response) => {
+    try {
+        const snapshot = await db.collection("business").get();
+        if (snapshot.empty) {
+            return res.status(404).json({ message: "No business found for this admin" });
+        }
+
+        const businesses =snapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+        }));
+
+        return res.status(200).json(businesses);
+    } catch (error: any) {
+        return res.status(500).json({ message: "Internal server error", error: error.message });
+    }
+}
+// Get Business for specific Admin
+export const getBusinessByAdmin = async (req: AuthenticatedRequest, res: Response) => {
+    try {
+        const adminId = req.user?.userId;
+        const adminRole = req.user?.role;
+
+        if (adminRole !== "admin") {
+            return res.status(403).json({ error: "Unauthorized: Admin only" });
+        }
+        const snapshot = await db.collection("business").where("adminId", "==", adminId).limit(1).get();
+        if (snapshot.empty) {
+            return res.status(404).json({ message: "No business found for this admin" });
+        }
+        const doc = snapshot.docs[0];
+        const business = { id: doc.id, ...doc.data() };
+
+        return res.status(200).json(business);
+    } catch (error: any) {
+        return res.status(500).json({ message: "Internal server error", error: error.message });
+    }
+}
+
+// Update Business by ID
+export const updateBusiness= async (req: Request, res: Response) => {
+    try {
+        const { businessId } = req.params;
+        await db.collection("business").doc(businessId).update(req.body);
+        res.status(200).json({ message: "Business updated successfully", businessId: businessId });
+    } catch (error: any) {
+        return res.status(500).json({ message: "Internal server error", error: error.message });
+    }
+}
+
+// Delete Business
+export const deleteBusiness = async (req: Request, res: Response) => {
+    try {
+        const { businessId } = req.params;
+        await db.collection("business").doc(businessId).delete();
+        res.status(200).json({ message: "Business deleted successfully", businessId: businessId })
+    } catch (error: any) {
+        return res.status(500).json({ message: "Internal server error", error: error.message });
+    }
+}
+
+
+//  Services
+// Create Services
+
+export const createService = async (req: Request, res: Response) => {
+    try {
+        const { businessId } = req.params;
+        const { name, description } = req.body;
+
+        if (!name || !description) {
+            return res.status(400).json({ error: "Name and description are required" });
 
         }
 
@@ -31,141 +124,49 @@ export const createService = async (req: Request, res: Response) => {
             description,
             rating: 0,
             reviewCount: 0,
-            adminId: adminId || null,
             createdAt: new Date(),
-        };
-        await db.collection("services").doc(newService.id).set(newService);
-        res.status(201).json({ message: "Service created successfully", newService });
+        }
 
+        await db.collection("business").doc(businessId).collection("services").doc(newService.id).set(newService);
+        res.status(201).json({ message: "Service created successfully", newService });
     } catch (error: any) {
         res.status(500).json({ error: error.message });
     }
-};
+}
 
 // Get All Services
-export const getAllServices = async (req: Request, res: Response) => {
+
+export const getServices = async (req: Request, res: Response) => {
     try {
-        const snapshot = await db.collection("services").get();
-        if (snapshot.empty) {
-            return res.status(404).json({ message: "No services found for this admin" });
-        }
+        const { businessId } = req.params;
+        const snapshot = await db.collection("business").doc(businessId).collection("services").get();
+        const services = snapshot.docs.map((doc) => doc.data());
 
-        const services =snapshot.docs.map((doc) => ({
-            id: doc.id,
-            ...doc.data(),
-        }));
-
-        return res.status(200).json(services);
+        res.status(200).json(services);
     } catch (error: any) {
-        return res.status(500).json({ message: "Internal server error", error: error.message });
-    }
-}
-export const getServiceByAdmin = async (req: AuthenticatedRequest, res: Response) => {
-    try {
-        const adminId = req.user?.userId;
-        const adminRole = req.user?.role;
+        res.status(500).json({ error: error.message });
 
-        if (adminRole !== "admin") {
-            return res.status(403).json({ error: "Unauthorized: Admin only" });
-        }
-        const snapshot = await db.collection("services").where("adminId", "==", adminId).limit(1).get();
-        if (snapshot.empty) {
-            return res.status(404).json({ message: "No services found for this admin" });
-        }
-        const doc = snapshot.docs[0];
-        const service = { id: doc.id, ...doc.data() };
-
-        return res.status(200).json(service);
-    } catch (error: any) {
-        return res.status(500).json({ message: "Internal server error", error: error.message });
     }
-}
+};
 
 // Update Service
 export const updateService = async (req: Request, res: Response) => {
     try {
-        const { serviceId } = req.params;
-        await db.collection("services").doc(serviceId).update(req.body);
-        res.status(200).json({ message: "Service updated successfully", serviceId: serviceId });
+        const { businessId, serviceId } = req.params;
+        await db.collection("business").doc(businessId).collection("services").doc(serviceId).update(req.body);
+        res.status(200).json({ message: "Service updated successfully" })
+
     } catch (error: any) {
-        return res.status(500).json({ message: "Internal server error", error: error.message });
+        res.status(500).json({ error: error.message });
     }
-}
+};
 
 // Delete Service
 export const deleteService = async (req: Request, res: Response) => {
     try {
-        const { serviceId } = req.params;
-        await db.collection("services").doc(serviceId).delete();
-        res.status(200).json({ message: "Service deleted successfully", serviceId: serviceId })
-    } catch (error: any) {
-        return res.status(500).json({ message: "Internal server error", error: error.message });
-    }
-}
-
-
-//  SubService
-// Create SubService
-
-export const createSubService = async (req: Request, res: Response) => {
-    try {
-        const { serviceId } = req.params;
-        const { name, description } = req.body;
-
-        if (!name || !description) {
-            return res.status(400).json({ error: "Name and description are required" });
-
-        }
-
-        const newSubService: SubService = {
-            id: uuidv4(),
-            name,
-            description,
-            rating: 0,
-            reviewCount: 0,
-            createdAt: new Date(),
-        }
-
-        await db.collection("services").doc(serviceId).collection("subServices").doc(newSubService.id).set(newSubService);
-        res.status(201).json({ message: "SubService created successfully", newSubService });
-    } catch (error: any) {
-        res.status(500).json({ error: error.message });
-    }
-}
-
-// Get All SubServices
-
-export const getSubServices = async (req: Request, res: Response) => {
-    try {
-        const { serviceId } = req.params;
-        const snapshot = await db.collection("services").doc(serviceId).collection("subServices").get();
-        const subServices = snapshot.docs.map((doc) => doc.data());
-
-        res.status(200).json(subServices);
-    } catch (error: any) {
-        res.status(500).json({ error: error.message });
-
-    }
-};
-
-// Update SubService
-export const updateSubService = async (req: Request, res: Response) => {
-    try {
-        const { serviceId, subServiceId } = req.params;
-        await db.collection("services").doc(serviceId).collection("subServices").doc(subServiceId).update(req.body);
-        res.status(200).json({ message: "SubService updated successfully" })
-
-    } catch (error: any) {
-        res.status(500).json({ error: error.message });
-    }
-};
-
-// Delete SubService
-export const deleteSubService = async (req: Request, res: Response) => {
-    try {
-        const { serviceId, subServiceId } = req.params;
-        await db.collection("services").doc(serviceId).collection("subServices").doc(subServiceId).delete();
-        res.status(200).json({ message: "SubService deleted successfully" });
+        const { businessId, serviceId } = req.params;
+        await db.collection("business").doc(businessId).collection("services").doc(serviceId).delete();
+        res.status(200).json({ message: "Service deleted successfully" });
     } catch (error: any) {
         res.status(500).json({ error: error.message });
     }
@@ -176,7 +177,7 @@ export const deleteSubService = async (req: Request, res: Response) => {
 
 export const addItem = async (req: Request, res: Response) => {
     try {
-        const { serviceId, subServiceId } = req.params;
+        const { businessId, serviceId } = req.params;
         const { name, description, price, category } = req.body;
         const image = req.file;
 
@@ -194,8 +195,8 @@ export const addItem = async (req: Request, res: Response) => {
 
         const newItem: Item = {
             id: uuidv4(),
+            businessId,
             serviceId,
-            subServiceId,
             name,
             description,
             price: parseFloat(price),
@@ -206,7 +207,7 @@ export const addItem = async (req: Request, res: Response) => {
             createdAt: new Date(),
         }
 
-        await db.collection("services").doc(serviceId).collection("subServices").doc(subServiceId).collection("items").doc(newItem.id).set(newItem);
+        await db.collection("business").doc(businessId).collection("services").doc(serviceId).collection("items").doc(newItem.id).set(newItem);
 
         res.status(201).json({ message: "Item created successfully", newItem });
     } catch (error: any) {
@@ -217,10 +218,10 @@ export const addItem = async (req: Request, res: Response) => {
 // Get all items
 export const getAllItems = async(req: Request, res: Response) => {
     try{
-        const {serviceId, subServiceId} = req.params;
+        const {businessId, serviceId} = req.params;
         const category = req.query.category as string;
         
-        const itemsRef = db.collection("services").doc(serviceId).collection("subServices").doc(subServiceId).collection("items");
+        const itemsRef = db.collection("business").doc(businessId).collection("services").doc(serviceId).collection("items");
 
         const query = category ? itemsRef.where("category", "==", category.toLowerCase()): itemsRef;    
 
@@ -236,7 +237,7 @@ export const getAllItems = async(req: Request, res: Response) => {
 
 export const updateItem = async (req: Request, res: Response) => {
     try{
-        const {serviceId, subServiceId, itemId} = req.params;
+        const {businessId, serviceId, itemId} = req.params;
         const updated = req.body;
         const image = req.file;
 
@@ -250,10 +251,10 @@ export const updateItem = async (req: Request, res: Response) => {
         updated.price = parseFloat(updated.price);
 
         await db.
+        collection("business").
+        doc(businessId).
         collection("services").
         doc(serviceId).
-        collection("subServices").
-        doc(subServiceId).
         collection("items").
         doc(itemId).
         update(updated);
@@ -268,11 +269,11 @@ export const updateItem = async (req: Request, res: Response) => {
 
 export const deleteItem = async( req: Request, res: Response) => {
     try{
-        const {serviceId, subServiceId, itemId} = req.params;
-        await db.collection("services").
+        const {businessId, serviceId, itemId} = req.params;
+        await db.collection("business").
+        doc(businessId).
+        collection("services").
         doc(serviceId).
-        collection("subServices").
-        doc(subServiceId).
         collection("items").
         doc(itemId).
         delete();

@@ -1,7 +1,7 @@
 export interface SessionItem{
     itemId: string,
+    businessId: string,
     serviceId: string,
-    subServiceId: string,
     name: string,
     price: number,
 }
@@ -16,8 +16,8 @@ export interface Session{
         service?:number,
         comment?: string,
         itemRatings?: {
+            businessId: string,
             serviceId: string,
-            subServiceId: string,
             itemId: string,
             rating: number
         }[],

@@ -2,9 +2,9 @@ import express from "express";
 import { verifyAdmin, verifyToken } from "../middleware/authMiddleware";
 import {
   getTopItemsAnalytics,
-  getTopServicesAnalytics,
+  getTopBusinessAnalytics,
   getTopStaffAnalytics,
-  getTopSubServicesAnalytics,
+  getTopServicesAnalytics,
 } from "../controllers/analyticsController";
 
 const router = express.Router();
@@ -36,6 +36,24 @@ router.get("/top-staff", verifyToken, verifyAdmin, getTopStaffAnalytics);
 
 /**
  * @swagger
+ * /analytics/top-business:
+ *   get:
+ *     summary: Get top-rated business
+ *     tags: [Analytics]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of business sorted by rating and review count
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Internal server error
+ */
+router.get("/top-business", verifyToken, verifyAdmin, getTopBusinessAnalytics);
+
+/**
+ * @swagger
  * /analytics/top-services:
  *   get:
  *     summary: Get top-rated services
@@ -44,31 +62,13 @@ router.get("/top-staff", verifyToken, verifyAdmin, getTopStaffAnalytics);
  *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: List of services sorted by rating and review count
+ *         description: List of services sorted by rating
  *       401:
  *         description: Unauthorized
  *       500:
  *         description: Internal server error
  */
-router.get("/top-services", verifyToken, verifyAdmin, getTopServicesAnalytics);
-
-/**
- * @swagger
- * /analytics/top-subservices:
- *   get:
- *     summary: Get top-rated subservices
- *     tags: [Analytics]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: List of subservices sorted by rating
- *       401:
- *         description: Unauthorized
- *       500:
- *         description: Internal server error
- */
-router.get("/top-subservices", verifyToken, verifyAdmin, getTopSubServicesAnalytics);
+router.get("/top-subservices", verifyToken, verifyAdmin, getTopServicesAnalytics);
 
 /**
  * @swagger

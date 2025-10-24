@@ -129,14 +129,14 @@ export const rateSession = async (req: Request, res: Response) => {
 
         // Track Affected Subservice/Services
 
-        const updatedSubServices = new Set<string>();
         const updatedServices = new Set<string>();
+        const updatedBusiness = new Set<string>();
 
         // Update each Item's Rating (loop)
         for (const item of itemRatings || []){
-            const {serviceId, subServiceId, itemId , rating} = item;
+            const {businessId, serviceId, itemId , rating} = item;
 
-            const itemRef = db.collection('services').doc(serviceId).collection('subServices').doc(subServiceId).collection('items').doc(itemId);
+            const itemRef = db.collection('business').doc(businessId).collection('services').doc(serviceId).collection('items').doc(itemId);
             
             const itemSnap = await itemRef.get();
             if (!itemSnap.exists) continue;
@@ -151,16 +151,16 @@ export const rateSession = async (req: Request, res: Response) => {
             });
 
             // Track affected IDs
-            updatedServices.add(serviceId);
-            updatedSubServices.add(`${serviceId}:${subServiceId}`);
+            updatedBusiness.add(businessId);
+            updatedServices.add(`${businessId}:${serviceId}`);
         }
 
         // Recalculate Affected Subservices
 
-        for (const pair of updatedSubServices){
-            const [serviceId, subServiceId] = pair.split(":");
+        for (const pair of updatedServices){
+            const [businessId, serviceId] = pair.split(":");
 
-            const itemsSnap = await db.collection("services").doc(serviceId).collection("subServices").doc(subServiceId).collection("items").get();
+            const itemsSnap = await db.collection("business").doc(businessId).collection("services").doc(serviceId).collection("items").get();
 
             let totalRating = 0;
             let count = 0;
@@ -175,21 +175,21 @@ export const rateSession = async (req: Request, res: Response) => {
 
             const avg = count >0 ? totalRating / count : 0;
 
-            const subServicRef = db.collection("services").doc(serviceId).collection("subServices").doc(subServiceId);
+            const serviceRef = db.collection("business").doc(businessId).collection("services").doc(serviceId);
 
-            await subServicRef.update({
+            await serviceRef.update({
                 rating: avg,
                 reviewCount: count,
             });
         }
 
-        for (const serviceId of updatedServices){
-            const subServiceSnap = await db.collection("services").doc(serviceId).collection("subServices").get();
+        for (const businessId of updatedBusiness){
+            const serviceSnap = await db.collection("business").doc(businessId).collection("services").get();
 
             let totalRating = 0;
             let count = 0;
 
-            subServiceSnap.forEach((subDoc) =>{
+            serviceSnap.forEach((subDoc) =>{
                 const subData = subDoc.data();
                 if(subData.rating !== undefined && subData.reviewCount > 0){
                     totalRating += subData.rating;
@@ -199,7 +199,7 @@ export const rateSession = async (req: Request, res: Response) => {
 
             const avg = count > 0 ? totalRating / count : 0;
 
-            const serviceRef = db.collection("services").doc(serviceId);
+            const serviceRef = db.collection("business").doc(businessId);
 
             await serviceRef.update({
                 rating: avg,

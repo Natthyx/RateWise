@@ -38,7 +38,7 @@ const router = express.Router();
  *                 type: string
  *               name:
  *                 type: string
- *               serviceId:
+ *               businessId:
  *                 type: string
  *     responses:
  *       201:

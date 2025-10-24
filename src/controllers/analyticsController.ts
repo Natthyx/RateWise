@@ -45,27 +45,27 @@ export const getTopStaffAnalytics = async (req: Request , res : Response ) =>{
 };
 
 
-export const getTopServicesAnalytics = async (req: Request , res : Response ) =>{
+export const getTopBusinessAnalytics = async (req: Request , res : Response ) =>{
     try{
-        const serviceSnap = await db.collection("services").get();
+        const businessSnap = await db.collection("business").get();
         const sessionsSnap = await db.collection("sessions").where("rated", "==", true).get();
 
-        const serviceMap: Record<string, any> = {};
+        const businessMap: Record<string, any> = {};
 
         sessionsSnap.forEach((doc) => {
             const session = doc.data();
             for (const ir of session.ratings?.itemRatings || []){
-                if(!serviceMap[ir.serviceId]) serviceMap[ir.serviceId] = [];
-                serviceMap[ir.serviceId].push({
+                if(!businessMap[ir.businessId]) businessMap[ir.businessId] = [];
+                businessMap[ir.businessId].push({
                     comment: session.ratings.comment,
                     rating: ir.rating,
                 });
             }
         });
 
-        const services = serviceSnap.docs.map((s) =>{
+        const businesses = businessSnap.docs.map((s) =>{
             const data = s.data();
-            const reviews = serviceMap[s.id] || [];
+            const reviews = businessMap[s.id] || [];
             return {
                 serviceId: s.id,
                 name: data.name,
@@ -75,51 +75,51 @@ export const getTopServicesAnalytics = async (req: Request , res : Response ) =>
             }; 
         });
 
-        const sorted = services.sort((a,b) => 
+        const sorted = businesses.sort((a,b) => 
             b.rating == a.rating 
             ? b.reviewCount - a.reviewCount : b.rating - a.rating);
 
-            res.status(200).json({topServices: sorted})
+            res.status(200).json({topBusiness: sorted})
     }
 
     catch(error: any){res.status(500).json({error: error.message});}
 };
 
-export const getTopSubServicesAnalytics = async (req: Request, res: Response) =>{
+export const getTopServicesAnalytics = async (req: Request, res: Response) =>{
     try{
-        const servicesSnap = await db.collection("services").get();
+        const businessSnap = await db.collection("business").get();
         const sessionSnap = await db.collection("sessions").where("rated","==",true).get();
 
 
-        const subServiceMap: Record <string, any> = {};
+        const serviceMap: Record <string, any> = {};
 
         sessionSnap.forEach((doc) => {
             const session = doc.data();
 
             for(const ir of session.ratings?.itemRatings || []){
-                const key = `${ir.serviceId}:${ir.subServiceId}`;
-                if(!subServiceMap[key]) subServiceMap[key] = [];
-                subServiceMap[key].push({
+                const key = `${ir.businessId}:${ir.serviceId}`;
+                if(!serviceMap[key]) serviceMap[key] = [];
+                serviceMap[key].push({
                     comment: session.ratings.comment,
                     rating: ir.rating,
                 });
             }
         });
 
-        const allSubServices: any [] = [];
+        const allServices: any [] = [];
 
-        for(const serviceDoc of servicesSnap.docs){
-            const subSnap = await db.collection("services").doc(serviceDoc.id).collection("subServices").get();
+        for(const businessDoc of businessSnap.docs){
+            const subSnap = await db.collection("business").doc(businessDoc.id).collection("services").get();
 
             subSnap.forEach((subDoc) => {
-                const key = `${serviceDoc.id}:${subDoc.id}`;
+                const key = `${businessDoc.id}:${subDoc.id}`;
                 const data = subDoc.data();
 
-                const reviews = subServiceMap[key] || [];
+                const reviews = serviceMap[key] || [];
 
-                allSubServices.push({
-                    subServiceId: subDoc.id,
-                    serviceId: serviceDoc.id,
+                allServices.push({
+                    serviceId: subDoc.id,
+                    businessId: businessDoc.id,
                     name: data.name,
                     rating: data.rating || 0,
                     reviewCount: data.reviewCount || 0,
@@ -129,13 +129,13 @@ export const getTopSubServicesAnalytics = async (req: Request, res: Response) =>
 
         }
 
-        const sorted = allSubServices.sort((a, b) =>
+        const sorted = allServices.sort((a, b) =>
             b.rating === a.rating
             ? b.reviewCount - a.reviewCount
                 : b.rating - a.rating
         );
 
-        res.status(200).json({topSubServices: sorted})
+        res.status(200).json({topServices: sorted})
     }catch(error: any){
         res.status(500).json({error: error.message});
     }
@@ -144,7 +144,7 @@ export const getTopSubServicesAnalytics = async (req: Request, res: Response) =>
 
 export const getTopItemsAnalytics = async (req: Request, res: Response) => {
   try {
-    const servicesSnap = await db.collection("services").get();
+    const businessSnap = await db.collection("business").get();
     const sessionsSnap = await db.collection("sessions").where("rated", "==", true).get();
 
     const itemMap: Record<string, any> = {};
@@ -152,7 +152,7 @@ export const getTopItemsAnalytics = async (req: Request, res: Response) => {
     sessionsSnap.forEach((doc) => {
       const session = doc.data();
       for (const ir of session.ratings?.itemRatings || []) {
-        const key = `${ir.serviceId}:${ir.subServiceId}:${ir.itemId}`;
+        const key = `${ir.businessId}:${ir.serviceId}:${ir.itemId}`;
         if (!itemMap[key]) itemMap[key] = [];
         itemMap[key].push({
           comment: session.ratings.comment,
@@ -163,31 +163,31 @@ export const getTopItemsAnalytics = async (req: Request, res: Response) => {
 
     const allItems: any[] = [];
 
-    for (const serviceDoc of servicesSnap.docs) {
+    for (const businessDoc of businessSnap.docs) {
       const subSnap = await db
+        .collection("business")
+        .doc(businessDoc.id)
         .collection("services")
-        .doc(serviceDoc.id)
-        .collection("subServices")
         .get();
 
       for (const subDoc of subSnap.docs) {
         const itemSnap = await db
+          .collection("business")
+          .doc(businessDoc.id)
           .collection("services")
-          .doc(serviceDoc.id)
-          .collection("subServices")
           .doc(subDoc.id)
           .collection("items")
           .get();
 
         itemSnap.forEach((itemDoc) => {
-          const key = `${serviceDoc.id}:${subDoc.id}:${itemDoc.id}`;
+          const key = `${businessDoc.id}:${subDoc.id}:${itemDoc.id}`;
           const data = itemDoc.data();
           const reviews = itemMap[key] || [];
 
           allItems.push({
             itemId: itemDoc.id,
-            subServiceId: subDoc.id,
-            serviceId: serviceDoc.id,
+            serviceId: subDoc.id,
+            businessId: businessDoc.id,
             name: data.name,
             rating: data.rating || 0,
             reviewCount: data.reviewCount || 0,

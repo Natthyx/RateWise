@@ -1,4 +1,4 @@
-export interface Service{
+export interface Business{
     id: string;
     name: string;
     description?: string;
@@ -7,7 +7,7 @@ export interface Service{
     adminId?: string,
     createdAt: Date;
 }
-export interface SubService{
+export interface Service{
     id: string;
     name: string;
     description?: string;
@@ -17,8 +17,8 @@ export interface SubService{
 }
 export interface Item {
     id: string;
-    serviceId: string; 
-    subServiceId: string;
+    businessId: string; 
+    serviceId: string;
     name: string;
     price: number;
     description?: string;

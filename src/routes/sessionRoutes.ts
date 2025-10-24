@@ -31,7 +31,11 @@ const router = express.Router();
  *                 items:
  *                   type: object
  *                   properties:
- *                     id:
+ *                     itemId:
+ *                       type: string
+ *                     businessId:
+ *                       type: string
+ *                     serviceId:
  *                       type: string
  *                     name:
  *                       type: string
@@ -107,9 +111,9 @@ router.get('/:sessionId', verifyToken,verifyStaff, getSessionById);
  *                 items:
  *                   type: object
  *                   properties:
- *                     serviceId:
+ *                     businessId:
  *                       type: string
- *                     subServiceId:
+ *                     serviceId:
  *                       type: string
  *                     itemId:
  *                       type: string

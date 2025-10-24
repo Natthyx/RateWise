@@ -22,8 +22,8 @@ setupSwagger(app);
 
 app.use("/auth", authRoutes);
 app.use("/staff", staffRoutes);
-app.use("/service", serviceRoutes);
-app.use("/session", sessionRoutes);
+app.use("/business", serviceRoutes);
+app.use("/sessions", sessionRoutes);
 app.use("/analytics/", analyticsRoutes);
 app.use("/", healthRoutes);
 
