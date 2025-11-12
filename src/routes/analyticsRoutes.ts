@@ -1,5 +1,6 @@
 import express from "express";
 import { verifyAdmin, verifyToken } from "../middleware/authMiddleware";
+import { asyncMiddleware } from "../utils/asyncMiddleware";
 import {
   getTopItemsAnalytics,
   getTopBusinessAnalytics,
@@ -32,7 +33,7 @@ const router = express.Router();
  *       500:
  *         description: Internal server error
  */
-router.get("/top-staff", verifyToken, verifyAdmin, getTopStaffAnalytics);
+router.get("/top-staff", verifyToken, asyncMiddleware(verifyAdmin), getTopStaffAnalytics);
 
 /**
  * @swagger
@@ -50,7 +51,7 @@ router.get("/top-staff", verifyToken, verifyAdmin, getTopStaffAnalytics);
  *       500:
  *         description: Internal server error
  */
-router.get("/top-business", verifyToken, verifyAdmin, getTopBusinessAnalytics);
+router.get("/top-business", verifyToken, asyncMiddleware(verifyAdmin), getTopBusinessAnalytics);
 
 /**
  * @swagger
@@ -68,7 +69,7 @@ router.get("/top-business", verifyToken, verifyAdmin, getTopBusinessAnalytics);
  *       500:
  *         description: Internal server error
  */
-router.get("/top-subservices", verifyToken, verifyAdmin, getTopServicesAnalytics);
+router.get("/top-subservices", verifyToken, asyncMiddleware(verifyAdmin), getTopServicesAnalytics);
 
 /**
  * @swagger
@@ -86,6 +87,6 @@ router.get("/top-subservices", verifyToken, verifyAdmin, getTopServicesAnalytics
  *       500:
  *         description: Internal server error
  */
-router.get("/top-items", verifyToken, verifyAdmin, getTopItemsAnalytics);
+router.get("/top-items", verifyToken, asyncMiddleware(verifyAdmin), getTopItemsAnalytics);
 
 export default router;

@@ -1,5 +1,5 @@
 import express from 'express';
-import { createSession, getSessionById,rateSession, getStaffSessions, verifySessionRating } from '../controllers/sessionController';
+import { createSession, getSessionById,rateSession, getStaffSessions, verifySessionRating, getRecentSessions, getAllReviewsForAdmin } from '../controllers/sessionController';
 import { verifyToken, verifyStaff, verifyAdmin } from "../middleware/authMiddleware";
 
 const router = express.Router();
@@ -79,6 +79,12 @@ router.post('/create', verifyToken, verifyStaff, createSession);
  *       500:
  *         description: Internal server error
  */
+// Place specific routes BEFORE parameterized routes to avoid conflicts
+router.get("/recent", verifyToken, verifyAdmin, getRecentSessions);
+
+// Admin: Get all reviews for admin's business
+router.get("/reviews", verifyToken, verifyAdmin, getAllReviewsForAdmin);
+
 router.get('/:sessionId', verifyToken,verifyStaff, getSessionById);
 
 /**
@@ -177,6 +183,48 @@ router.get("/:staffId/all", verifyToken, verifyStaff,getStaffSessions);
  *       500:
  *         description: Internal server error
  */
-router.post("/:sessionId/verify", verifyToken, verifyAdmin, verifySessionRating)
+router.post("/:sessionId/verify", verifyToken, verifyAdmin, verifySessionRating);
+
+/**
+ * @swagger
+ * /sessions/recent:
+ *   get:
+ *     summary: Get recent sessions for admin's business
+ *     tags: [Sessions]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Recent sessions retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 recentSessions:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                       staffId:
+ *                         type: string
+ *                       businessId:
+ *                         type: string
+ *                       ratings:
+ *                         type: object
+ *                       createdAt:
+ *                         type: string
+ *                       items:
+ *                         type: array
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Admin's business not found
+ *       500:
+ *         description: Internal server error
+ */
+// (moved above to avoid being shadowed by '/:sessionId')
 
 export default router;

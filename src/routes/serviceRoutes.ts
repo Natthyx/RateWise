@@ -14,8 +14,13 @@ import {
     updateItem,
     deleteItem,
     getBusinessByAdmin,
+    addCategory,
+    getCategories,
+    updateCategory,
+    deleteCategory,
 } from "../controllers/serviceController";
 import { verifyToken, verifyAdmin, verifySuperAdmin } from "../middleware/authMiddleware";
+import { asyncMiddleware } from "../utils/asyncMiddleware";
 
 
 const router = express.Router();
@@ -105,7 +110,7 @@ router.get("/all", verifyToken, verifySuperAdmin, getAllBusiness)
  *         description: Internal server error
  */
 
-router.get("/my-business", verifyToken, verifyAdmin, getBusinessByAdmin);
+router.get("/my-business", verifyToken, asyncMiddleware(verifyAdmin), getBusinessByAdmin);
 
 /**
  * @swagger
@@ -195,7 +200,7 @@ router.delete("/delete/:businessId", verifyToken, verifySuperAdmin, deleteBusine
  *       500:
  *         description: Internal server error
  */
-router.post("/:businessId/services/create", verifyToken, verifyAdmin, createService);
+router.post("/:businessId/services/create", verifyToken, asyncMiddleware(verifyAdmin), createService);
 
 /**
  * @swagger
@@ -253,7 +258,7 @@ router.get("/:businessId/services/all", getServices);
  *       500:
  *         description: Internal server error
  */
-router.patch("/:businessId/services/update/:serviceId", verifyToken, verifyAdmin, updateService);
+router.patch("/:businessId/services/update/:serviceId", verifyToken, asyncMiddleware(verifyAdmin), updateService);
 
 /**
  * @swagger
@@ -280,7 +285,7 @@ router.patch("/:businessId/services/update/:serviceId", verifyToken, verifyAdmin
  *       500:
  *         description: Internal server error
  */
-router.delete("/:businessId/services/delete/:serviceId", verifyToken, verifyAdmin, deleteService);
+router.delete("/:businessId/services/delete/:serviceId", verifyToken, asyncMiddleware(verifyAdmin), deleteService);
 
 /**
  * @swagger
@@ -327,7 +332,7 @@ router.delete("/:businessId/services/delete/:serviceId", verifyToken, verifyAdmi
  *       500:
  *         description: Internal server error
  */
-router.post("/:businessId/services/:serviceId/items/add", verifyToken, verifyAdmin, upload.single("image"), addItem);
+router.post("/:businessId/services/:serviceId/items/add", verifyToken, asyncMiddleware(verifyAdmin), upload.single("image"), addItem);
 
 /**
  * @swagger
@@ -406,7 +411,7 @@ router.get("/:businessId/services/:serviceId/items/all", getAllItems);
  *       500:
  *         description: Internal server error
  */
-router.patch("/:businessId/services/:serviceId/items/update/:itemId", verifyToken, verifyAdmin, upload.single("image"),updateItem);
+router.patch("/:businessId/services/:serviceId/items/update/:itemId", verifyToken, asyncMiddleware(verifyAdmin), upload.single("image"),updateItem);
 
 /**
  * @swagger
@@ -438,6 +443,12 @@ router.patch("/:businessId/services/:serviceId/items/update/:itemId", verifyToke
  *       500:
  *         description: Internal server error
  */
-router.delete("/:businessId/services/:serviceId/items/delete/:itemId", verifyToken, verifyAdmin, deleteItem);
+router.delete("/:businessId/services/:serviceId/items/delete/:itemId", verifyToken, asyncMiddleware(verifyAdmin), deleteItem);
+
+// Categories
+router.post("/:businessId/services/:serviceId/categories/add", verifyToken, asyncMiddleware(verifyAdmin), addCategory);
+router.get("/:businessId/services/:serviceId/categories/all", getCategories);
+router.patch("/:businessId/services/:serviceId/categories/update/:categoryId", verifyToken, asyncMiddleware(verifyAdmin), updateCategory);
+router.delete("/:businessId/services/:serviceId/categories/delete/:categoryId", verifyToken, asyncMiddleware(verifyAdmin), deleteCategory);
 
 export default router;

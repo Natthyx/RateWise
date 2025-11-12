@@ -1,3 +1,5 @@
+import { Timestamp } from "firebase-admin/firestore";
+
 export interface Business{
     id: string;
     name: string;
@@ -5,7 +7,8 @@ export interface Business{
     rating: number,
     reviewCount: number,
     adminId?: string,
-    createdAt: Date;
+    subscriptionId?: string;
+    createdAt: Timestamp;
 }
 export interface Service{
     id: string;
@@ -13,7 +16,7 @@ export interface Service{
     description?: string;
     rating: number,
     reviewCount: number,
-    createdAt: Date;
+    createdAt: Timestamp;
 }
 export interface Item {
     id: string;
@@ -26,7 +29,13 @@ export interface Item {
     imageUrl?: string;
     rating: number,
     reviewCount: number,
-    createdAt: Date;
+    createdAt: Timestamp;
 }
 
-
+export interface Category {
+    id: string;
+    businessId: string;
+    serviceId: string;
+    name: string;
+    createdAt: Timestamp;
+}

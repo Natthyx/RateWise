@@ -5,6 +5,10 @@ import {
   logoutAdmin,
   resetPassword,
   loginStaff,
+  getAllAdmins,
+  updateAdmin,
+  deleteAdmin,
+  updateMyProfile,
 } from "../controllers/authController";
 import { verifyToken, verifySuperAdmin } from "../middleware/authMiddleware";
 
@@ -144,5 +148,83 @@ router.post("/reset-password", resetPassword);
  *         description: Internal server error
  */
 router.post("/staff/login", loginStaff);
+
+/**
+ * @swagger
+ * /auth/admins:
+ *   get:
+ *     summary: Get all admins (Super Admin only)
+ *     tags: [Authentication]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of all admins
+ *       500:
+ *         description: Internal server error
+ */
+router.get("/admins", verifyToken, verifySuperAdmin, getAllAdmins);
+
+/**
+ * @swagger
+ * /auth/admins/{adminId}:
+ *   patch:
+ *     summary: Update an admin (Super Admin only)
+ *     tags: [Authentication]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: adminId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *               businessId:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Admin updated successfully
+ *       404:
+ *         description: Business not found
+ *       500:
+ *         description: Internal server error
+ */
+router.patch("/admins/:adminId", verifyToken, verifySuperAdmin, updateAdmin);
+
+/**
+ * @swagger
+ * /auth/admins/{adminId}:
+ *   delete:
+ *     summary: Delete an admin (Super Admin only)
+ *     tags: [Authentication]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: adminId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Admin deleted successfully
+ *       500:
+ *         description: Internal server error
+ */
+router.delete("/admins/:adminId", verifyToken, verifySuperAdmin, deleteAdmin);
+
+// Self update
+router.patch("/me", verifyToken, updateMyProfile);
 
 export default router;
